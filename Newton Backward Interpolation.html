@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Newton Backward Interpolation</title>
+  <style>
+     @font-face {
+    font-family: 'Rosemary';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Rosemary'), url('Fonts/Rosemary.woff') format('woff');
+    }
+    
+    html {
+        font-family:'Rosemary'; font-weight:normal;
+    } 
+    /* CSS Variables for Theming */
+    :root {
+      --body-bg: #000;
+      --body-text: #fff;
+      --container-bg: #000;
+      --accent-color: #ff6600;
+      --input-bg: #222;
+    }
+    .light-mode {
+      --body-bg: #fff;
+      --body-text: #000;
+      --container-bg: #fff;
+      --input-bg: #f5f5f5;
+    }
+    /* Base Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Layout & Fonts */
+    body {
+      background-color: var(--body-bg);
+      color: var(--body-text);
+      //font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      background: var(--container-bg);
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 30px;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 0 20px var(--accent-color);
+      margin-bottom: 30px;
+      position: relative;
+      transition: background 0.3s;
+      animation: fadeIn 1s ease-out;
+    }
+    .hidden { display: none; }
+    /* Navigation & Toggle Buttons */
+    .back-button {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+    }
+    .back-button:hover { transform: scale(1.1); }
+    /* Accent Toggle Buttons */
+    .accent-toggle {
+      position: absolute;
+      top: 0;
+      right: 50px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .accent-toggle:hover { transform: scale(1.1); }
+    /* Theme Toggle Button */
+    .theme-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-toggle:hover { transform: scale(1.1); }
+    /* Accent Options Containers */
+    #accent-options {
+      position: absolute;
+      top: 45px;
+      right: 50px;
+      display: none;
+      background: var(--container-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: 5px;
+      padding: 5px;
+      box-shadow: 0 0 10px var(--accent-color);
+      gap: 5px;
+      z-index: 10;
+      flex-direction: row;
+    }
+    #accent-options-desc {
+      position: absolute;
+      top: 45px;
+      right: 50px;
+      display: none;
+      background: var(--container-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: 5px;
+      padding: 5px;
+      box-shadow: 0 0 10px var(--accent-color);
+      gap: 5px;
+      z-index: 10;
+      flex-direction: row;
+    }
+    #accent-options button,
+    #accent-options-desc button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+    #accent-options button:hover,
+    #accent-options-desc button:hover { transform: scale(1.1); }
+    h1, h2 {
+      color: var(--accent-color);
+      text-shadow: 0 0 10px var(--accent-color);
+      animation: neon 1.5s infinite alternate;
+      margin-top: 40px;
+    }
+    h1 { font-size: 2rem; margin-bottom: 10px; }
+    h2 { font-size: 1.5rem; margin-bottom: 10px; }
+    p { margin-bottom: 20px; line-height: 1.5; text-align: left; }
+    .input-group { margin: 15px 0; text-align: left; }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--body-text);
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid var(--accent-color);
+      border-radius: 5px;
+      background: var(--input-bg);
+      color: var(--body-text);
+      font-size: 1rem;
+    }
+    button.calc-btn {
+      font-family:'Rosemary'; font-weight:normal;
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      color: var(--body-text);
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-color);
+      transition: transform 0.2s;
+    }
+    button.calc-btn:hover { transform: scale(1.05); }
+    .result {
+      margin-top: 25px;
+      font-size: 1.2rem;
+      color: var(--body-text);
+    }
+    #iterationDetails {
+      margin-top: 20px;
+      overflow-x: auto;
+      display: none;
+    }
+    #iterationDetails table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #iterationDetails th, #iterationDetails td {
+      border: 1px solid var(--accent-color);
+      padding: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    #iterationDetails th { background-color: var(--accent-color); color: var(--body-text); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes neon {
+      from { text-shadow: 0 0 5px var(--accent-color), 0 0 10px var(--accent-color); }
+      to { text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.3rem; }
+      button.calc-btn { font-size: 0.9rem; padding: 10px 15px; }
+      #iterationDetails th, #iterationDetails td { font-size: 0.8rem; padding: 6px; }
+      #accent-options button, #accent-options-desc button { width: 25px; height: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Main Calculator Container -->
+  <div class="container" id="calculator-container">
+    <button class="back-button" onclick="window.history.back()">←</button>
+    <button class="accent-toggle" id="accent-toggle">🎨</button>
+    <button class="theme-toggle">☀</button>
+    <div id="accent-options">
+      <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+      <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+      <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+      <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+      <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+      
+  </div>
+    <h1>Newton Backward Interpolation</h1>
+    <p>
+      Enter x‑values and y‑values as comma‑separated lists, and provide the target X value.<br>
+      (The target X should be near the last data point.)
+    </p>
+    <div class="input-group">
+      <label for="xValues">x Values:</label>
+      <input type="text" id="xValues" value="1,2,3,4,5">
+    </div>
+    <div class="input-group">
+      <label for="yValues">y Values:</label>
+      <input type="text" id="yValues" value="2.3,3.1,4.0,4.8,5.5">
+    </div>
+    <div class="input-group">
+      <label for="Xn">Target X (Xₙ):</label>
+      <input type="number" id="Xn" step="any" value="4.5">
+    </div>
+    <button class="calc-btn" id="calculate">Interpolate</button>
+    <div class="result" id="result"></div>
+    <button class="calc-btn" id="toggle-iterations" onclick="toggleDetails()">Show Iteration Details</button>
+    <div id="iterationDetails"></div>
+    <button class="calc-btn" id="show-description" onclick="toggleDescription()">Show Description</button>
+  </div>
+  
+  <!-- Description Container (Hidden by Default) -->
+  <div id="description-container" class="container hidden">
+    <button class="back-button" onclick="toggleDescription()">←</button>
+    <!-- <button class="accent-toggle" id="accent-toggle-desc">🎨</button>
+    <div id="accent-options-desc">
+      <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+      <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+      <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+      <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+      <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">☀</button> -->
+    
+    <h2>Project Description & Formula</h2>
+    <p>
+      <strong>Newton Backward Interpolation:</strong><br>
+      Given equally spaced data points x₀, x₁, …, xₙ (with h = x₁ − x₀) and corresponding y‑values, compute  
+      u = (X – xₙ)/h  
+      and interpolate using:  
+      <br><br>
+      P(X) = yₙ + u·Δyₙ + [u(u+1)/2!]·Δ²yₙ + [u(u+1)(u+2)/3!]·Δ³yₙ + …  
+    </p>
+    <p>
+      <strong>How It Works:</strong><br>
+      1. The program computes the full forward difference table from the input data.<br>
+      2. It extracts the backward differences (the last element from each row) and computes the interpolation polynomial using the Newton Backward formula.<br>
+      3. Detailed iteration information is shown below, including for each order: the backward difference, term contribution, cumulative sum, and the formula used.<br>
+      4. Additionally, the full forward difference table is displayed.
+    </p>
+    <p>
+      This project demonstrates Newton Backward Interpolation with dynamic theming, customizable accent colors, and detailed iteration tracking.
+    </p>
+  </div>
+  <script src='Scripts/themeAccent.js'></script>
+  <script>
+    // Toggle theme function
+    /*function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+      updateToggleIcon();
+    }
+    
+    // Update theme toggle icons based on current mode
+    function updateToggleIcon() {
+      document.querySelectorAll('.theme-toggle').forEach(toggle => {
+        toggle.textContent = document.body.classList.contains('light-mode') ? "🌙" : "☀";
+      });
+    }*/
+    
+    // Initialize theme based on system preference
+    /*if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.body.classList.remove('light-mode');
+    } else {
+      document.body.classList.add('light-mode');
+    }
+    updateToggleIcon();
+    
+    // Accent toggle for main container
+    document.getElementById('accent-toggle').addEventListener('click', function() {
+      let accentOptions = document.getElementById('accent-options');
+      accentOptions.style.display = (accentOptions.style.display === "flex") ? "none" : "flex";
+    });*/
+    
+    // Accent toggle for description container
+    /* document.getElementById('accent-toggle-desc').addEventListener('click', function() {
+      let accentOptionsDesc = document.getElementById('accent-options-desc');
+      accentOptionsDesc.style.display = (accentOptionsDesc.style.display === "flex") ? "none" : "flex";
+    }); */
+    
+    // Attach event listener for all accent option buttons in both containers
+    /*document.querySelectorAll('#accent-options button.accent-option, #accent-options-desc button.accent-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const color = this.getAttribute('data-color');
+        document.documentElement.style.setProperty("--accent-color", color);
+        document.getElementById('accent-options').style.display = "none";
+       // document.getElementById('accent-options-desc').style.display = "none";
+        updateToggleIcon();
+      });
+    });*/
+    
+    // Regression computation (Newton Backward Interpolation)
+    document.getElementById('calculate').addEventListener('click', function() {
+      const xValuesInput = document.getElementById('xValues').value;
+      const yValuesInput = document.getElementById('yValues').value;
+      const Xn = parseFloat(document.getElementById('Xn').value);
+      
+      let xArray = xValuesInput.split(",").map(val => parseFloat(val.trim()));
+      let yArray = yValuesInput.split(",").map(val => parseFloat(val.trim()));
+      
+      if (xArray.length !== yArray.length || xArray.some(isNaN) || yArray.some(isNaN) || isNaN(Xn)) {
+        document.getElementById('result').textContent = 'Please enter valid, equal-length lists of numbers and a valid target X value.';
+        return;
+      }
+      
+      let n = xArray.length;
+      let h = xArray[1] - xArray[0];
+      let x_n = xArray[n - 1];
+      let u = (Xn - x_n) / h;
+      
+      // Build full forward difference table
+      let diffTable = [];
+      diffTable.push(yArray.slice());
+      for (let k = 1; k < n; k++) {
+        let diffRow = [];
+        for (let i = 0; i < n - k; i++) {
+          diffRow.push(diffTable[k - 1][i + 1] - diffTable[k - 1][i]);
+        }
+        diffTable.push(diffRow);
+      }
+      
+      // Extract backward differences (last element of each row)
+      let backDiff = [];
+      for (let k = 0; k < diffTable.length; k++) {
+        backDiff.push(diffTable[k][diffTable[k].length - 1]);
+      }
+      
+      // Compute interpolation using Newton Backward formula
+      let resultVal = backDiff[0]; // y_n
+      let cumulative = resultVal;
+      let details = [];
+      details.push({
+        order: 0,
+        backwardDiff: backDiff[0].toFixed(6),
+        termContribution: backDiff[0],
+        cumulativeSum: cumulative,
+        formula: "yₙ"
+      });
+      for (let i = 1; i < n; i++) {
+        let prod = 1;
+        for (let j = 0; j < i; j++) {
+          prod *= (u + j);
+        }
+        let term = (prod * backDiff[i]) / factorial(i);
+        cumulative += term;
+        details.push({
+          order: i,
+          backwardDiff: backDiff[i].toFixed(6),
+          termContribution: term,
+          cumulativeSum: cumulative,
+          formula: `u(u+1)...(u+${i-1})/${i}! * Δ^${i}yₙ`
+        });
+        resultVal = cumulative;
+      }
+      
+      document.getElementById('result').textContent = `The interpolated value at X = ${Xn} is: ${resultVal.toFixed(6)}`;
+      
+      // Build detailed iteration table for backward interpolation
+      let iterTableHTML = `<table>
+        <tr>
+          <th>Order (Δ^i y)</th>
+          <th>Backward Difference</th>
+          <th>Term Contribution</th>
+          <th>Cumulative Sum</th>
+          <th>Formula</th>
+        </tr>`;
+      details.forEach(item => {
+        iterTableHTML += `<tr>
+          <td>Δ^${item.order}y</td>
+          <td>${item.backwardDiff}</td>
+          <td>${item.termContribution.toFixed(6)}</td>
+          <td>${item.cumulativeSum.toFixed(6)}</td>
+          <td>${item.formula}</td>
+        </tr>`;
+      });
+      iterTableHTML += `</table>`;
+      
+      // Build full forward difference table
+      let fullTableHTML = `<table>
+        <tr>
+          <th>Order</th>`;
+      for (let j = 0; j < n; j++) {
+        fullTableHTML += `<th>Col ${j+1}</th>`;
+      }
+      fullTableHTML += `</tr>`;
+      diffTable.forEach((row, i) => {
+        fullTableHTML += `<tr><td>Δ^${i}y</td>`;
+        row.forEach(val => {
+          fullTableHTML += `<td>${val.toFixed(6)}</td>`;
+        });
+        fullTableHTML += `</tr>`;
+      });
+      fullTableHTML += `</table>`;
+      
+      let combinedHTML = `<h3>Backward Interpolation Details</h3>` + iterTableHTML +
+                         `<h3>Full Forward Difference Table</h3>` + fullTableHTML;
+      document.getElementById('iterationDetails').innerHTML = combinedHTML;
+    });
+    
+    function factorial(n) {
+      return n <= 1 ? 1 : n * factorial(n - 1);
+    }
+    
+    function determinant3x3(m) {
+      return m[0][0]*(m[1][1]*m[2][2] - m[1][2]*m[2][1])
+           - m[0][1]*(m[1][0]*m[2][2] - m[1][2]*m[2][0])
+           + m[0][2]*(m[1][0]*m[2][1] - m[1][1]*m[2][0]);
+    }
+    
+    function toggleDetails() {
+      let detailsDiv = document.getElementById("iterationDetails");
+      detailsDiv.style.display = (detailsDiv.style.display === "none" || detailsDiv.style.display === "") ? "block" : "none";
+    }
+    
+    // Toggle description container on the same page
+    function toggleDescription() {
+      let mainDiv = document.getElementById("calculator-container");
+      let descDiv = document.getElementById("description-container");
+      if (descDiv.style.display === "none" || descDiv.style.display === "") {
+        mainDiv.style.display = "none";
+        descDiv.style.display = "block";
+      } else {
+        descDiv.style.display = "none";
+        mainDiv.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>

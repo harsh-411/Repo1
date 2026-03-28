@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Newton Divided Difference Interpolation</title>
+  <style>
+    @font-face {
+    font-family: 'Rosemary';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Rosemary'), url('Fonts/Rosemary.woff') format('woff');
+    }
+    
+    html {
+        font-family:'Rosemary'; font-weight:normal;
+    } 
+    /* CSS Variables for Theming */
+    :root {
+      --body-bg: #000;
+      --body-text: #fff;
+      --container-bg: #000;
+      --accent-color: #ff6600;
+      --input-bg: #222;
+    }
+    .light-mode {
+      --body-bg: #fff;
+      --body-text: #000;
+      --container-bg: #fff;
+      --input-bg: #f5f5f5;
+    }
+    /* Base Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Layout & Fonts */
+    body {
+      background-color: var(--body-bg);
+      color: var(--body-text);
+      // font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      background: var(--container-bg);
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 30px;
+      width: 100%;
+      max-width: 800px;
+      text-align: center;
+      box-shadow: 0 0 20px var(--accent-color);
+      margin-bottom: 30px;
+      position: relative;
+      transition: background 0.3s;
+      animation: fadeIn 1s ease-out;
+    }
+    .hidden { display: none; }
+    /* Navigation & Toggle Buttons */
+    .back-button {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+    }
+    .back-button:hover { transform: scale(1.1); }
+    .accent-toggle {
+      position: absolute;
+      top: 0;
+      right: 50px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .accent-toggle:hover { transform: scale(1.1); }
+    .theme-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-toggle:hover { transform: scale(1.1); }
+    /* Accent Options Containers */
+    #accent-options, #accent-options-desc {
+      position: absolute;
+      top: 45px;
+      right: 50px;
+      display: none;
+      background: var(--container-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: 5px;
+      padding: 5px;
+      box-shadow: 0 0 10px var(--accent-color);
+      gap: 5px;
+      z-index: 10;
+      flex-direction: row;
+    }
+    #accent-options button,
+    #accent-options-desc button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+    }
+    #accent-options button:hover,
+    #accent-options-desc button:hover { transform: scale(1.1); }
+    h1, h2 {
+      color: var(--accent-color);
+      text-shadow: 0 0 10px var(--accent-color);
+      animation: neon 1.5s infinite alternate;
+      margin-top: 40px;
+    }
+    h1 { font-size: 2rem; margin-bottom: 10px; }
+    h2 { font-size: 1.5rem; margin-bottom: 10px; }
+    p { margin-bottom: 20px; line-height: 1.5; text-align: left; }
+    .input-group { margin: 15px 0; text-align: left; }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--body-text);
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid var(--accent-color);
+      border-radius: 5px;
+      background: var(--input-bg);
+      color: var(--body-text);
+      font-size: 1rem;
+    }
+    button.calc-btn {
+      font-family:'Rosemary'; font-weight:normal;
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      color: var(--body-text);
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-color);
+      transition: transform 0.2s;
+    }
+    button.calc-btn:hover { transform: scale(1.05); }
+    .result {
+      margin-top: 25px;
+      font-size: 1.2rem;
+      color: var(--body-text);
+    }
+    #iterationDetails {
+      margin-top: 20px;
+      overflow-x: auto;
+      display: none;
+    }
+    #iterationDetails table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #iterationDetails th, #iterationDetails td {
+      border: 1px solid var(--accent-color);
+      padding: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    #iterationDetails th { background-color: var(--accent-color); color: var(--body-text); }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes neon {
+      from { text-shadow: 0 0 5px var(--accent-color), 0 0 10px var(--accent-color); }
+      to { text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.3rem; }
+      button.calc-btn { font-size: 0.9rem; padding: 10px 15px; }
+      #iterationDetails th, #iterationDetails td { font-size: 0.8rem; padding: 6px; }
+      #accent-options button, #accent-options-desc button { width: 25px; height: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Main Calculator Container -->
+  <div class="container" id="calculator-container">
+    <button class="back-button" onclick="window.history.back()">←</button>
+    <button class="accent-toggle" id="accent-toggle">🎨</button>
+    <button class="theme-toggle">☀</button>
+    <div id="accent-options">
+      <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+      <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+      <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+      <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+      <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+      
+     </div>
+    <h1>Newton Divided Difference Interpolation</h1>
+    <p>
+      Enter x‑values and y‑values as comma‑separated lists, and provide a target x value for interpolation.
+    </p>
+    <div class="input-group">
+      <label for="xValues">x Values (comma‑separated):</label>
+      <input type="text" id="xValues" placeholder="e.g., 1,2,3,4">
+    </div>
+    <div class="input-group">
+      <label for="yValues">y Values (comma‑separated):</label>
+      <input type="text" id="yValues" placeholder="e.g., 2,3,5,7">
+    </div>
+    <div class="input-group">
+      <label for="targetX">Target x Value:</label>
+      <input type="number" id="targetX" placeholder="e.g., 2.5" step="any">
+    </div>
+    <button class="calc-btn" onclick="computeNewtonDivided()">Compute Interpolated Value</button>
+    <div class="result" id="result"></div>
+    <button class="calc-btn" onclick="toggleDetails()">Toggle Iteration Details</button>
+    <div id="iterationDetails"></div>
+    <button class="calc-btn" onclick="toggleDescription()">Show Description</button>
+  </div>
+  
+  <!-- Description Container (Hidden by Default) -->
+  <div id="description-container" class="container hidden">
+    <button class="back-button" onclick="toggleDescription()">←</button>
+    <!-- <button class="accent-toggle" id="accent-toggle-desc">🎨</button>
+    <div id="accent-options-desc">
+      <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+      <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+      <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+      <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+      <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">☀</button> -->
+    <h2>Project Description & Formula</h2>
+    
+    <p>
+      <strong>Newton Divided Difference Interpolation:</strong><br>
+      Given a set of data points (x₀, y₀), (x₁, y₁), …, (xₙ, yₙ), the divided difference table is constructed as follows:
+    </p>
+    <p>
+      f[x₀] = y₀<br>
+      f[x₀,x₁] = (f(x₁) - f(x₀))/(x₁ - x₀)<br>
+      f[x₀,x₁,x₂] = (f[x₁,x₂] - f[x₀,x₁])/(x₂ - x₀)<br>
+      … and so on.
+    </p>
+    <p>
+      The interpolation polynomial is then given by:  
+      P(x) = f[x₀] + (x - x₀)f[x₀,x₁] + (x - x₀)(x - x₁)f[x₀,x₁,x₂] + …  
+    </p>
+    <p>
+      Dynamic theming and accent color options are provided for a customizable interface.
+    </p>
+  </div>
+  <script src='Scripts/themeAccent.js'></script>
+  <script>
+    // Toggle theme function
+    /*function toggleTheme() {
+      document.body.classList.toggle('light-mode');
+      updateToggleIcon();
+    }
+    
+    // Update theme toggle icons based on current mode
+    function updateToggleIcon() {
+      document.querySelectorAll('.theme-toggle').forEach(toggle => {
+        toggle.textContent = document.body.classList.contains('light-mode') ? "🌙" : "☀";
+      });
+    }*/
+    
+    // Initialize theme based on system preference
+    /*if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.body.classList.remove('light-mode');
+    } else {
+      document.body.classList.add('light-mode');
+    }
+    updateToggleIcon();
+    
+    // Accent toggle for main container
+    document.getElementById('accent-toggle').addEventListener('click', function() {
+      let accentOptions = document.getElementById('accent-options');
+      accentOptions.style.display = (accentOptions.style.display === "flex") ? "none" : "flex";
+    });*/
+    
+    // Accent toggle for description container
+    /* document.getElementById('accent-toggle-desc').addEventListener('click', function() {
+      let accentOptionsDesc = document.getElementById('accent-options-desc');
+      accentOptionsDesc.style.display = (accentOptionsDesc.style.display === "flex") ? "none" : "flex";
+    }); */
+    
+    // Attach event listener for accent option buttons in both containers
+    /*document.querySelectorAll('#accent-options button.accent-option, #accent-options-desc button.accent-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const color = this.getAttribute('data-color');
+        document.documentElement.style.setProperty("--accent-color", color);
+        document.getElementById('accent-options').style.display = "none";
+        // document.getElementById('accent-options-desc').style.display = "none";
+        updateToggleIcon();
+      });
+    });*/
+    
+    // Newton Divided Difference Interpolation computation
+    function computeNewtonDivided() {
+      let xValues = document.getElementById("xValues").value;
+      let yValues = document.getElementById("yValues").value;
+      let targetX = parseFloat(document.getElementById("targetX").value);
+      
+      let xArray = xValues.split(",").map(s => parseFloat(s.trim()));
+      let yArray = yValues.split(",").map(s => parseFloat(s.trim()));
+      
+      if (xArray.length !== yArray.length || xArray.some(isNaN) || yArray.some(isNaN) || isNaN(targetX)) {
+        document.getElementById("result").textContent = "Please enter valid, equal-length lists of numbers and a valid target x value.";
+        return;
+      }
+      
+      let n = xArray.length;
+      
+      // Build divided differences table (2D array)
+      let table = [];
+      // First column is y values
+      table.push([...yArray]);
+      for (let j = 1; j < n; j++) {
+        let column = [];
+        for (let i = 0; i < n - j; i++) {
+          let value = (table[j-1][i+1] - table[j-1][i]) / (xArray[i+j] - xArray[i]);
+          column.push(value);
+        }
+        table.push(column);
+      }
+      
+      // Compute interpolated value at targetX using Newton's formula
+      let P = table[0][0];
+      let mult = 1;
+      for (let j = 1; j < n; j++) {
+        mult *= (targetX - xArray[j-1]);
+        P += mult * table[j][0];
+      }
+      
+      document.getElementById("result").textContent = `Interpolated value at x = ${targetX} is: ${P.toFixed(6)}`;
+      
+      // Build iteration details (divided difference table)
+      let detailsHTML = `<h3>Divided Difference Table</h3>`;
+      detailsHTML += `<table><tr><th>Order</th>`;
+      for (let i = 0; i < n; i++) {
+        detailsHTML += `<th>${i}</th>`;
+      }
+      detailsHTML += `</tr>`;
+      for (let j = 0; j < table.length; j++) {
+        detailsHTML += `<tr><td>Order ${j}</td>`;
+        for (let i = 0; i < table[j].length; i++) {
+          detailsHTML += `<td>${table[j][i].toFixed(6)}</td>`;
+        }
+        detailsHTML += `</tr>`;
+      }
+      detailsHTML += `</table>`;
+      
+      detailsHTML += `<h3>Interpolation Polynomial</h3>`;
+      detailsHTML += `<p>P(x) = ${table[0][0].toFixed(6)}`;
+      mult = 1;
+      for (let j = 1; j < n; j++) {
+        mult *= `(x - ${xArray[j-1]})`;
+        detailsHTML += ` + ${table[j][0].toFixed(6)}${mult}`;
+      }
+      detailsHTML += `</p>`;
+      
+      document.getElementById("iterationDetails").innerHTML = detailsHTML;
+    }
+    
+    function toggleDetails() {
+      let detailsDiv = document.getElementById("iterationDetails");
+      detailsDiv.style.display = (detailsDiv.style.display === "none" || detailsDiv.style.display === "") ? "block" : "none";
+    }
+    
+    // Toggle description container on same page
+    function toggleDescription() {
+      let mainDiv = document.getElementById("calculator-container");
+      let descDiv = document.getElementById("description-container");
+      if (descDiv.style.display === "none" || descDiv.style.display === "") {
+        mainDiv.style.display = "none";
+        descDiv.style.display = "block";
+      } else {
+        descDiv.style.display = "none";
+        mainDiv.style.display = "block";
+      }
+    }
+  </script>
+</body>
+</html>
+    

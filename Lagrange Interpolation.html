@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lagrange Interpolation</title>
+  <style>
+    @font-face {
+    font-family: 'Rosemary';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Rosemary'), url('Fonts/Rosemary.woff') format('woff');
+    }
+    
+    html {
+        font-family:'Rosemary'; font-weight:normal;
+    } 
+    
+    /* CSS Variables for Theming */
+    :root {
+      --body-bg: #000;
+      --body-text: #fff;
+      --container-bg: #000;
+      --accent-color: #ff6600;
+      --input-bg: #222;
+    }
+    .light-mode {
+      --body-bg: #fff;
+      --body-text: #000;
+      --container-bg: #fff;
+      --input-bg: #f5f5f5;
+    }
+    /* Base Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* System Font & Layout */
+    body {
+      background-color: var(--body-bg);
+      color: var(--body-text);
+      // font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      background: var(--container-bg);
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 30px;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 0 20px var(--accent-color);
+      animation: fadeIn 1s ease-out;
+      margin-bottom: 30px;
+      position: relative;
+      transition: background 0.3s;
+    }
+    /* Navigation Buttons */
+    .back-button {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+    }
+    .back-button:hover { transform: scale(1.1); }
+    /* Accent & Theme Toggle Buttons */
+    .accent-toggle {
+      position: absolute;
+      top: 0;
+      right: 50px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .accent-toggle:hover { transform: scale(1.1); }
+    .theme-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-toggle:hover { transform: scale(1.1); }
+    /* Accent Options Panel (closed by default) */
+    #accent-options {
+      position: absolute;
+      top: 45px;
+      right: 50px;
+      display: none;
+      background: var(--container-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: 5px;
+      padding: 5px;
+      box-shadow: 0 0 10px var(--accent-color);
+      gap: 5px;
+      z-index: 10;
+      flex-direction: row;
+    }
+    #accent-options button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+    #accent-options button:hover { transform: scale(1.1); }
+    /* Headings and Text */
+    h1, h2 {
+      color: var(--accent-color);
+      text-shadow: 0 0 10px var(--accent-color);
+      animation: neon 1.5s infinite alternate;
+      margin-top: 40px;
+    }
+    h1 { font-size: 2rem; margin-bottom: 10px; }
+    h2 { font-size: 1.5rem; margin-top: 20px; margin-bottom: 10px; }
+    p { margin-bottom: 20px; line-height: 1.5; text-align: left; }
+    .input-group { margin: 15px 0; text-align: left; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--body-text); }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid var(--accent-color);
+      border-radius: 5px;
+      background: var(--input-bg);
+      color: var(--body-text);
+      font-size: 1rem;
+    }
+    textarea { resize: vertical; }
+    button.calc-btn {
+      font-family:'Rosemary'; font-weight:normal;
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      color: var(--body-text);
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-color);
+      transition: transform 0.2s;
+    }
+    button.calc-btn:hover { transform: scale(1.05); }
+    .result { margin-top: 25px; font-size: 1.2rem; color: var(--body-text); }
+    /* Iteration Details Table */
+    #iterationDetails {
+      margin-top: 20px;
+      overflow-x: auto;
+      display: none;
+    }
+    #iterationDetails table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #iterationDetails th, #iterationDetails td {
+      border: 1px solid var(--accent-color);
+      padding: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    #iterationDetails th {
+      background-color: var(--accent-color);
+      color: var(--body-text);
+    }
+    @keyframes neon {
+      from { text-shadow: 0 0 5px var(--accent-color), 0 0 10px var(--accent-color); }
+      to { text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.3rem; }
+      button.calc-btn { font-size: 0.9rem; padding: 10px 15px; }
+      #iterationDetails th, #iterationDetails td { font-size: 0.8rem; padding: 6px; }
+      #accent-options button { width: 25px; height: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Project 11: Lagrange Interpolation -->
+  <div id="calculator-container" class="container">
+    <!-- Minimalistic Back Button -->
+    <button id="main-back-button" class="back-button">←</button>
+    <!-- Accent Color Selector Toggle (Closed by Default) -->
+    <button id="accent-toggle" class="accent-toggle">🎨</button>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle"></button>
+    <!-- Accent Options Panel (Closed by Default) -->
+    <div id="accent-options">
+      <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+      <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+      <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+      <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+      <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+      
+    </div>
+    <h1>Lagrange Interpolation</h1>
+    <p>
+      Interpolate a value at Xₙ using the Lagrange formula.<br>
+      Enter x-values and y-values as comma‑separated lists (ensure both lists have the same number of values), and then provide the target X value.
+    </p>
+    <div class="input-group">
+      <label for="xValues">x Values (comma‑separated):</label>
+      <input type="text" id="xValues" value="5,6,9,11">
+    </div>
+    <div class="input-group">
+      <label for="yValues">y Values (comma‑separated):</label>
+      <input type="text" id="yValues" value="46,66,81,93">
+    </div>
+    <div class="input-group">
+      <label for="Xn">Target X (Xₙ):</label>
+      <input type="number" id="Xn" step="any" value="10">
+    </div>
+    <button id="calculate" class="calc-btn">Interpolate</button>
+    <div class="result" id="result"></div>
+    <!-- Removed summary block -->
+    <button id="toggle-iterations" class="calc-btn">Show Iteration Details</button>
+    <div id="iterationDetails"></div>
+    <button id="show-description" class="calc-btn">Show Description</button>
+  </div>
+  
+  <!-- Description Section (Hidden by Default) -->
+  <div id="description-container" class="container" style="display: none;">
+    <!-- Minimalistic Back Button -->
+    <button id="back-button" class="back-button">←</button>
+    <!-- Accent Toggle Button for Description -->
+    <!-- <button id="accent-toggle-desc" class="accent-toggle">🎨</button> -->
+    <!-- Theme Toggle Button -->
+    <!-- <button class="theme-toggle"></button> -->
+    <h2>Project Description & Formula</h2>
+    <p>
+      <strong>Lagrange Interpolation Formula:</strong><br>
+      The interpolated value at Xₙ is given by:
+      <br><br>
+      L(Xₙ) = Σ [ yᵢ · Lᵢ(Xₙ) ], where
+      <br>
+      Lᵢ(Xₙ) = ∏<sub>j≠i</sub> ((Xₙ − xⱼ)/(xᵢ − xⱼ))
+    </p>
+    <p>
+      <strong>How It Works:</strong><br>
+      1. Enter x-values and y-values as comma‑separated lists and provide the target X value.<br>
+      2. For each data point, the program computes:
+      <br>
+      - The numerator: the product of (Xₙ − xⱼ) for j ≠ i<br>
+      - The denominator: the product of (xᵢ − xⱼ) for j ≠ i<br>
+      - The Lagrange basis value Lᵢ(Xₙ) = (numerator)/(denominator)<br>
+      - The term contribution: yᵢ · Lᵢ(Xₙ)<br>
+      3. The sum of these terms gives the interpolated value at Xₙ.<br>
+      4. Detailed iteration information is shown in the table below.
+    </p>
+    <p>
+      This project demonstrates Lagrange interpolation with dynamic theming, customizable accent colors, and detailed iteration tracking.
+    </p>
+  </div>
+  <script src='Scripts/themeAccent.js'></script>
+  <script>
+    // --- Theme Toggle Handling ---
+    /*function updateToggleIcon() {
+      const toggles = document.querySelectorAll('.theme-toggle');
+      toggles.forEach(toggle => {
+        toggle.textContent = document.body.classList.contains('light-mode') ? "🌙" : "☀";
+      });
+    }
+    document.querySelectorAll('.theme-toggle').forEach(toggle => {
+      toggle.addEventListener('click', function() {
+        document.body.classList.toggle('light-mode');
+        updateToggleIcon();
+      });
+    });*/
+    /*const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    darkModeMediaQuery.addEventListener('change', function(e) {
+      if (e.matches) { document.body.classList.remove('light-mode'); }
+      else { document.body.classList.add('light-mode'); }
+      updateToggleIcon();
+    });
+    if (!darkModeMediaQuery.matches) { document.body.classList.add('light-mode'); }
+    updateToggleIcon();*/
+    
+    // --- Accent Color Selector Handling ---
+   /* const accentToggle = document.getElementById('accent-toggle');
+    const accentOptions = document.getElementById('accent-options');
+    accentToggle.addEventListener('click', function() {
+      accentOptions.style.display = (accentOptions.style.display === "flex") ? "none" : "flex";
+    });
+    document.querySelectorAll('#accent-options button.accent-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const color = this.getAttribute('data-color');
+        document.documentElement.style.setProperty("--accent-color", color);
+        accentOptions.style.display = "none";
+        updateToggleIcon();
+      });
+    });*/
+    
+    // --- Lagrange Interpolation Implementation ---
+    function lagrangeInterpolation(xArray, yArray, Xn) {
+      let n = xArray.length;
+      let interpolated = 0;
+      let details = [];
+      for (let i = 0; i < n; i++) {
+        let numerator = 1;
+        let denominator = 1;
+        for (let j = 0; j < n; j++) {
+          if (i !== j) {
+            numerator *= (Xn - xArray[j]);
+            denominator *= (xArray[i] - xArray[j]);
+          }
+        }
+        let Li = numerator / denominator;
+        let term = Li * yArray[i];
+        interpolated += term;
+        // Build a formula string for this term
+        let formula = "";
+        for (let j = 0; j < n; j++) {
+          if (i !== j) {
+            formula += `(X - ${xArray[j]})/( ${xArray[i]} - ${xArray[j]} ) * `;
+          }
+        }
+        if (formula.endsWith(" * ")) {
+          formula = formula.slice(0, -3);
+        }
+        details.push({ index: i, x: xArray[i], y: yArray[i], numerator: numerator, denominator: denominator, Li: Li, term: term, formula: formula });
+      }
+      return { interpolated: interpolated, details: details };
+    }
+    
+    document.getElementById('calculate').addEventListener('click', function() {
+      const xValuesInput = document.getElementById('xValues').value;
+      const yValuesInput = document.getElementById('yValues').value;
+      const Xn = parseFloat(document.getElementById('Xn').value);
+      
+      // Parse comma-separated values
+      let xArray = xValuesInput.split(",").map(val => parseFloat(val.trim()));
+      let yArray = yValuesInput.split(",").map(val => parseFloat(val.trim()));
+      
+      if (xArray.length !== yArray.length || xArray.some(isNaN) || yArray.some(isNaN) || isNaN(Xn)) {
+        document.getElementById('result').textContent = 'Please enter valid, equal-length lists of numbers and a valid target X value.';
+        return;
+      }
+      
+      const output = lagrangeInterpolation(xArray, yArray, Xn);
+      document.getElementById('result').textContent = `The interpolated value at X = ${Xn} is: ${output.interpolated.toFixed(6)}`;
+      
+      // Removed summary block; only the iteration table is shown.
+      
+      // Build HTML table for iteration details with extra columns
+      let tableHTML = `<table>
+                        <tr>
+                          <th>Index</th>
+                          <th>x</th>
+                          <th>y</th>
+                          <th>Numerator</th>
+                          <th>Denom.</th>
+                          <th>Lagrange Basis Lᵢ</th>
+                          <th>Term Contribution</th>
+                          <th>Formula</th>
+                        </tr>`;
+      output.details.forEach(item => {
+        tableHTML += `<tr>
+                        <td>${item.index}</td>
+                        <td>${item.x.toFixed(6)}</td>
+                        <td>${item.y.toFixed(6)}</td>
+                        <td>${item.numerator.toFixed(6)}</td>
+                        <td>${item.denominator.toFixed(6)}</td>
+                        <td>${item.Li.toFixed(6)}</td>
+                        <td>${item.term.toFixed(6)}</td>
+                        <td>${item.formula}</td>
+                      </tr>`;
+      });
+      tableHTML += `</table>`;
+      document.getElementById('iterationDetails').innerHTML = tableHTML;
+    });
+    
+    // Toggle Iteration Details Display
+    document.getElementById('toggle-iterations').addEventListener('click', function() {
+      const iterDiv = document.getElementById('iterationDetails');
+      if (iterDiv.style.display === "none" || iterDiv.style.display === "") {
+        iterDiv.style.display = "block";
+        this.textContent = "Hide Iteration Details";
+      } else {
+        iterDiv.style.display = "none";
+        this.textContent = "Show Iteration Details";
+      }
+    });
+    
+    // --- Navigation ---
+    document.getElementById('show-description').addEventListener('click', function() {
+      document.getElementById('calculator-container').style.display = 'none';
+      document.getElementById('description-container').style.display = 'block';
+    });
+    document.getElementById('back-button').addEventListener('click', function() {
+      document.getElementById('description-container').style.display = 'none';
+      document.getElementById('calculator-container').style.display = 'block';
+    });
+    document.getElementById('main-back-button').addEventListener('click', function() {
+      window.history.back();
+    });
+  </script>
+</body>
+</html>

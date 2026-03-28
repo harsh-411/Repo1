@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Newton-Raphson Root Finding</title>
+  <style>
+    @font-face {
+    font-family: 'Rosemary';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Rosemary'), url('Fonts/Rosemary.woff') format('woff');
+    }
+    
+    html {
+        font-family:'Rosemary'; font-weight:normal;
+    } 
+    /* CSS Variables for Theming */
+    :root {
+      --body-bg: #000;            /* Dark mode: pure black */
+      --body-text: #fff;          /* Dark mode: white text */
+      --container-bg: #000;       /* Container background for dark mode */
+      --accent-color: #ff6600;    /* Default accent color */
+      --input-bg: #222;           /* Input background in dark mode */
+    }
+    .light-mode {
+      --body-bg: #fff;            /* Light mode: pure white */
+      --body-text: #000;          /* Light mode: black text */
+      --container-bg: #fff;       /* Container background for light mode */
+      --input-bg: #f5f5f5;        /* Input background in light mode */
+    }
+    
+    /* Base Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    /* Robust dynamic system font */
+    body {
+      background-color: var(--body-bg);
+      color: var(--body-text);
+      // font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    
+    .container {
+      background: var(--container-bg);
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 30px;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 0 20px var(--accent-color);
+      animation: fadeIn 1s ease-out;
+      margin-bottom: 30px;
+      position: relative;
+      transition: background 0.3s;
+    }
+    
+    /* Minimalistic Back Button (Top-Left) */
+    .back-button {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+    }
+    .back-button:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Accent Toggle Button (Palette Icon) Positioned Top-Right (to left of theme toggle) */
+    .accent-toggle {
+      position: absolute;
+      top: 0;
+      right: 50px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .accent-toggle:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Circular Theme Toggle Button (Sun/Moon Icon) Positioned Top-Right */
+    .theme-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-toggle:hover {
+      transform: scale(1.1);
+    }
+    
+    /* Accent Options Panel (Closed by Default) */
+    #accent-options {
+      position: absolute;
+      top: 45px;
+      right: 50px;
+      display: none;
+      background: var(--container-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: 5px;
+      padding: 5px;
+      box-shadow: 0 0 10px var(--accent-color);
+      gap: 5px;
+      z-index: 10;
+      flex-direction: row;
+    }
+    #accent-options button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+    #accent-options button:hover {
+      transform: scale(1.1);
+    }
+    
+    #accent-options-desc {
+      position: absolute;
+      top: 45px;
+      right: 50px;
+      display: none;
+      background: var(--container-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: 5px;
+      padding: 5px;
+      box-shadow: 0 0 10px var(--accent-color);
+      gap: 5px;
+      z-index: 10;
+      flex-direction: row;
+    }
+    #accent-options-desc button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+    #accent-options-desc button:hover { transform: scale(1.1); }
+    
+    h1, h2 {
+      color: var(--accent-color);
+      text-shadow: 0 0 10px var(--accent-color);
+      animation: neon 1.5s infinite alternate;
+      margin-top: 40px;
+    }
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    p {
+      margin-bottom: 20px;
+      line-height: 1.5;
+      text-align: left;
+    }
+    .input-group {
+      margin: 15px 0;
+      text-align: left;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: var(--body-text);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid var(--accent-color);
+      border-radius: 5px;
+      background: var(--input-bg);
+      color: var(--body-text);
+      font-size: 1rem;
+    }
+    textarea {
+      resize: vertical;
+    }
+    button.calc-btn {
+      font-family:'Rosemary'; font-weight:normal;
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      color: var(--body-text);
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-color);
+      transition: transform 0.2s;
+    }
+    button.calc-btn:hover {
+      transform: scale(1.05);
+    }
+    .result {
+      margin-top: 25px;
+      font-size: 1.2rem;
+      color: var(--body-text);
+    }
+    /* Iteration Details Table */
+    #iterationDetails {
+      margin-top: 20px;
+      overflow-x: auto;
+      display: none;
+    }
+    #iterationDetails table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #iterationDetails th, #iterationDetails td {
+      border: 1px solid var(--accent-color);
+      padding: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    #iterationDetails th {
+      background-color: var(--accent-color);
+      color: var(--body-text);
+    }
+    @keyframes neon {
+      from { text-shadow: 0 0 5px var(--accent-color), 0 0 10px var(--accent-color); }
+      to { text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.3rem; }
+      button.calc-btn { font-size: 0.9rem; padding: 10px 15px; }
+      #iterationDetails th, #iterationDetails td { font-size: 0.8rem; padding: 6px; }
+      #accent-options button { width: 25px; height: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Project 4: Newton-Raphson Root Finding -->
+  <div id="calculator-container" class="container">
+    <!-- Minimalistic Back Button -->
+    <button id="main-back-button" class="back-button">←</button>
+    <!-- Accent Color Selector Toggle (Closed by Default) -->
+    <button id="accent-toggle" class="accent-toggle">🎨</button>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle"></button>
+    <!-- Accent Options Panel (Closed by Default) -->
+    <div id="accent-options">
+      <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+      <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+      <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+      <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+      <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+      
+     </div>
+    <h1>Newton-Raphson Root Finding</h1>
+    <p>
+      Find an approximate root of f(x) using the Newton-Raphson method.<br>
+      Provide an initial guess, tolerance, and maximum iterations.<br>
+      (You can use functions like sin(x) or exp(x); shorthand will be automatically converted.)
+    </p>
+    <div class="input-group">
+      <label for="x0">Initial Guess (x₀):</label>
+      <input type="number" id="x0" step="any" value="1">
+    </div>
+    <div class="input-group">
+      <label for="tol">Tolerance:</label>
+      <input type="number" id="tol" step="any" value="0.000001">
+    </div>
+    <div class="input-group">
+      <label for="maxIter">Max Iterations:</label>
+      <input type="number" id="maxIter" value="50">
+    </div>
+    <div class="input-group">
+      <label for="equation">Custom Equation f(x) (use 'x' as variable):</label>
+      <input type="text" id="equation" value="x*x - 2">
+    </div>
+    <button id="calculate" class="calc-btn">Calculate Root</button>
+    <div class="result" id="result"></div>
+    <button id="toggle-iterations" class="calc-btn">Show Iteration Details</button>
+    <div id="iterationDetails"></div>
+    <button id="show-description" class="calc-btn">Show Description</button>
+  </div>
+  
+  <!-- Description Section (Hidden by Default) -->
+  <div id="description-container" class="container" style="display: none;">
+    <!-- Minimalistic Back Button -->
+    <button id="back-button" class="back-button">←</button>
+    <!-- Accent Toggle Button for Description -->
+    <!-- <button id="accent-toggle-desc" class="accent-toggle">🎨</button> -->
+    <!-- Theme Toggle Button -->
+    <!-- <button class="theme-toggle"></button>
+    <div id="accent-desc-options">
+      <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+      <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+      <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+      <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+      <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+    </div> -->
+    
+    <h2>Project Description & Formula</h2>
+    <p>
+      <strong>Newton-Raphson Method:</strong><br>
+      The method computes successive approximations to the root of f(x) using:<br>
+      <em>xₙ₊₁ = xₙ - f(xₙ)/f'(xₙ)</em>
+    </p>
+    <p>
+      <strong>How It Works:</strong><br>
+      1. Enter an initial guess, tolerance, and maximum iterations.<br>
+      2. The derivative f'(x) is approximated numerically using a small delta (e.g., 1e-6).<br>
+      3. Iteration details (iteration number, current x, f(x), derivative, and new x) are recorded.<br>
+      4. The approximate root and number of iterations are displayed.
+    </p>
+    <p>
+      This project demonstrates the Newton-Raphson method for root finding with dynamic theming, customizable accent colors, detailed iteration tracking, and support for trigonometric and exponential functions.
+    </p>
+  </div>
+  <script src='Scripts/themeAccent.js'></script>
+  <script>
+    // --- Theme Toggle Handling ---
+    /*function updateToggleIcon() {
+      const toggles = document.querySelectorAll('.theme-toggle');
+      toggles.forEach(toggle => {
+        toggle.textContent = document.body.classList.contains('light-mode') ? "🌙" : "☀";
+      });
+    }
+    
+    document.querySelectorAll('.theme-toggle').forEach(toggle => {
+      toggle.addEventListener('click', function() {
+        document.body.classList.toggle('light-mode');
+        updateToggleIcon();
+      });
+    });*/
+    
+    /*const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    darkModeMediaQuery.addEventListener('change', function(e) {
+      if (e.matches) {
+        document.body.classList.remove('light-mode');
+      } else {
+        document.body.classList.add('light-mode');
+      }
+      updateToggleIcon();
+    });
+    
+    if (!darkModeMediaQuery.matches) {
+      document.body.classList.add('light-mode');
+    }
+    updateToggleIcon();*/
+    
+    // --- Accent Color Selector Handling ---
+   /* document.getElementById('accent-toggle').addEventListener('click', function() {
+  let accentOptions = document.getElementById('accent-options');
+  accentOptions.style.display = (accentOptions.style.display === "flex") ? "none" : "flex";
+});*/
+
+// Accent toggle for description container
+/* document.getElementById('accent-toggle-desc').addEventListener('click', function() {
+  let accentOptionsDesc = document.getElementById('accent-options-desc');
+  accentOptionsDesc.style.display = (accentOptionsDesc.style.display === "flex") ? "none" : "flex";
+}); */
+
+    /*document.querySelectorAll('#accent-options button.accent-option, #accent-options-desc button.accent-option').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const color = this.getAttribute('data-color');
+    document.documentElement.style.setProperty("--accent-color", color);
+    // Hide both accent options containers
+    document.getElementById('accent-options').style.display = "none";
+    // document.getElementById('accent-options-desc').style.display = "none";
+    updateToggleIcon();
+  });
+});*/
+
+    
+    // --- Dynamic Equation Handling ---
+    function createFunction(expr) {
+      // Replace shorthand for math functions with Math.<function>
+      expr = expr.replace(/\b(sin|cos|tan|asin|acos|atan|exp|log|sqrt|pow)\(/g, "Math.$1(");
+      try {
+        return new Function("x", "return " + expr + ";");
+      } catch (e) {
+        alert("Invalid function expression. Please use a valid mathematical expression in terms of x.");
+        return null;
+      }
+    }
+    
+    // --- Newton-Raphson Method with Iteration Details ---
+    function numericalDerivative(f, x, delta = 1e-6) {
+      return (f(x + delta) - f(x - delta)) / (2 * delta);
+    }
+    
+    function newtonRaphson(x0, tol, maxIter, f) {
+      let iterations = [];
+      let x = x0;
+      iterations.push({ iteration: 0, x: x, f_x: f(x), derivative: numericalDerivative(f, x), newX: "" });
+      for (let i = 1; i <= maxIter; i++) {
+        let f_x = f(x);
+        let d = numericalDerivative(f, x);
+        if (Math.abs(d) < 1e-12) {
+          alert("Derivative too small. Method fails.");
+          break;
+        }
+        let x_new = x - f_x / d;
+        iterations.push({ iteration: i, x: x, f_x: f_x, derivative: d, newX: x_new });
+        if (Math.abs(x_new - x) < tol) {
+          return { root: x_new, iterations: i, details: iterations };
+        }
+        x = x_new;
+      }
+      return { root: x, iterations: maxIter, details: iterations };
+    }
+    
+    document.getElementById('calculate').addEventListener('click', function() {
+      const x0 = parseFloat(document.getElementById('x0').value);
+      const tol = parseFloat(document.getElementById('tol').value);
+      const maxIter = parseInt(document.getElementById('maxIter').value);
+      const eq = document.getElementById('equation').value;
+      
+      if (isNaN(x0) || isNaN(tol) || isNaN(maxIter) || tol <= 0 || maxIter <= 0) {
+        document.getElementById('result').textContent = 'Please enter valid numbers.';
+        return;
+      }
+      
+      const f = createFunction(eq);
+      if (!f) return;
+      
+      const { root, iterations, details } = newtonRaphson(x0, tol, maxIter, f);
+      document.getElementById('result').textContent = `Approximate root: ${root.toFixed(6)} (in ${iterations} iterations)`;
+      
+      let tableHTML = `<table>
+                        <tr>
+                          <th>Iteration</th>
+                          <th>x</th>
+                          <th>f(x)</th>
+                          <th>Derivative</th>
+                          <th>New x</th>
+                        </tr>`;
+      details.forEach(item => {
+        tableHTML += `<tr>
+                        <td>${item.iteration}</td>
+                        <td>${item.x === "" ? "" : item.x.toFixed(6)}</td>
+                        <td>${item.f_x === "" ? "" : item.f_x.toFixed(6)}</td>
+                        <td>${item.derivative === "" ? "" : item.derivative.toFixed(6)}</td>
+                        <td>${item.newX === "" ? "" : item.newX.toFixed(6)}</td>
+                      </tr>`;
+      });
+      tableHTML += `</table>`;
+      document.getElementById('iterationDetails').innerHTML = tableHTML;
+    });
+    
+    // Toggle Iteration Details Display
+    document.getElementById('toggle-iterations').addEventListener('click', function() {
+      const iterDiv = document.getElementById('iterationDetails');
+      if (iterDiv.style.display === "none" || iterDiv.style.display === "") {
+        iterDiv.style.display = "block";
+        this.textContent = "Hide Iteration Details";
+      } else {
+        iterDiv.style.display = "none";
+        this.textContent = "Show Iteration Details";
+      }
+    });
+    
+    // --- Navigation ---
+    document.getElementById('show-description').addEventListener('click', function() {
+      document.getElementById('calculator-container').style.display = 'none';
+      document.getElementById('description-container').style.display = 'block';
+    });
+    
+    document.getElementById('back-button').addEventListener('click', function() {
+      document.getElementById('description-container').style.display = 'none';
+      document.getElementById('calculator-container').style.display = 'block';
+    });
+    
+    document.getElementById('main-back-button').addEventListener('click', function() {
+      window.history.back();
+    });
+  </script>
+</body>
+</html>

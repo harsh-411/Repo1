@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mathematics - III</title>
+    <style>
+        @font-face {
+    font-family: 'Rosemary';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Rosemary'), url('Fonts/Rosemary.woff') format('woff');
+    }
+    
+    html {
+        font-family:'Rosemary'; font-weight:normal;
+    } 
+        /* CSS Variables for Theming */
+        :root {
+            --body-bg: #000;            /* Dark mode: pure black */
+            --body-text: #fff;          /* Dark mode: white text */
+            --container-bg: #000;       /* Container background for dark mode */
+            --accent-color: #ff6600;    /* Default accent color */
+        }
+        .light-mode {
+            --body-bg: #fff;            /* Light mode: pure white */
+            --body-text: #000;          /* Light mode: black text */
+            --container-bg: #fff;       /* Container background for light mode */
+        }
+
+        /* Base Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Body Styles */
+        body {
+            background-color: var(--body-bg);
+            color: var(--body-text);
+            //font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Container Styles */
+        .container {
+            background: var(--container-bg);
+            border: 2px solid var(--accent-color);
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 0 20px var(--accent-color);
+            animation: fadeIn 1s ease-out;
+            margin-bottom: 30px;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        /* Button Styles */
+        .back-button, .accent-toggle, .theme-toggle {
+            position: absolute;
+            top: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            cursor: pointer;
+            outline: none;
+        }
+        .back-button { left: 10px; }
+        .accent-toggle { right: 60px; }
+        .theme-toggle { right: 10px; }
+
+        /* Accent Options Panel */
+        #accent-options {
+            position: absolute;
+            top: 45px;
+            right: 60px;
+            display: none; /* Closed by default */
+            background: var(--container-bg);
+            border: 1px solid var(--accent-color);
+            border-radius: 5px;
+            padding: 5px;
+            box-shadow: 0 0 10px var(--accent-color);
+            gap: 5px;
+            z-index: 10;
+            flex-direction: row;
+        }
+        #accent-options button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            outline: none;
+        }
+
+        /* Heading and Text Styles */
+        h1 {
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-color), 0 0 20px var(--accent-color);
+            margin-top: 40px;
+            font-size: 2rem;
+            position: relative;
+            animation: neon 3s infinite alternate;
+        }
+
+        /* Broken Neon Sign Effect */
+         @keyframes neon {
+            0% {
+                text-shadow: 
+                    0 0 5px #ff0000, 
+                    0 0 10px #ff0000, 
+                    0 0 15px #ff6600, 
+                    0 0 20px #ff6600, 
+                    0 0 30px #ff6600, 
+                    0 0 40px #ff6600;
+            }
+            25% {
+                text-shadow: 
+                    0 0 5px #00ff00, 
+                    0 0 10px #00ff00, 
+                    0 0 15px #00ff00, 
+                    0 0 20px #00ff00, 
+                    0 0 30 px #00ff00, 
+                    0 0 40px #00ff00;
+            }
+            50% {
+                text-shadow: 
+                    0 0 5px #0000ff, 
+                    0 0 10px #0000ff, 
+                    0 0 15px #6600ff, 
+                    0 0 20px #6600ff, 
+                    0 0 30px #6600ff, 
+                    0 0 40px #6600ff;
+            }
+            75% {
+                text-shadow: 
+                    0 0 5px #ff00ff, 
+                    0 0 10px #ff00ff, 
+                    0 0 15px #ff0066, 
+                    0 0 20px #ff0066, 
+                    0 0 30px #ff0066, 
+                    0 0 40px #ff0066;
+            }
+            100% {
+                text-shadow: 
+                    0 0 5px #ff6600, 
+                    0 0 10px #ff6600, 
+                    0 0 15px #ff6600, 
+                    0 0 20px #ff6600, 
+                    0 0 30px #ff6600, 
+                    0 0 40px #ff6600;
+            }
+        }
+
+        .link {
+            display: block;
+            margin: 20px auto;
+            font-size: 1.3em;
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.3s, text-shadow 0.3s;
+            //text-shadow: 0 0 5px var(--accent-color), 0 0 10px var(--accent-color);
+        }
+        .link:hover {
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff, 0 0 20px #ff00ff;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        
+        .toast {
+            background: var(--container-bg);
+            //background-color: var(--accent-color);
+            border: 2px solid var(--accent-color);
+            text-align: center;
+            box-shadow: 0 0 20px var(--accent-color);
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.3em;
+            color: var(--body-text);
+            //color: var(--accent-color);
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .toast.show {
+            display: block;
+            opacity: 1;
+        }
+      
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="accent-toggle" class="accent-toggle">🎨</button>
+        <button class="theme-toggle"></button>
+        <h1 id="math-heading">Mathematics - III</h1>
+        <p class = 'link' style = "margin:0px auto;">------------------------------</p>
+        <div id="toast" class="toast"></div>
+            
+        <a href="Trapezoidal Rule Integration.html" class="link">• Trapezoidal Rule Integration</a>
+        <a href="Milne Predictor and Corrector.html" class="link">• Milne Predictor and Corrector</a>
+        <a href="Newton Backward Interpolation.html" class="link">• Newton Backward Interpolation</a>
+        <a href="Regula Falsi Root Finding.html" class="link">• Regula Falsi Root Finding</a>
+        <a href="Secant Method Root Finding.html" class="link">• Secant Method Root Finding</a>
+        <a href="Runge-Kutta 4th Order Method (RK4) ODE Solver.html" class="link">• Runge-Kutta 4th Order Method (RK4) ODE Solver</a>
+        <a href="Euler's Method ODE Solver.html" class="link">• Euler's Method ODE Solver</a>
+        <a href="Adams Predictor-Corrector ODE Solver.html" class="link">• Adams Predictor-Corrector ODE Solver</a>
+        <a href="Lagrange Interpolation.html" class="link">• Lagrange Interpolation</a>
+        <a href="Newton-Raphson Root Finding.html" class="link">• Newton-Raphson Root Finding</a>
+        <a href="Simpson’s 38 Rule Integration.html" class="link">• Simpson’s 38 Rule Integration</a>
+        <a href="Simpson’s 13 Rule Integration.html" class="link">• Simpson’s 13 Rule Integration</a>
+        <a href="Jacobi Method Linear Equation Solver.html" class="link">• Jacobi Method Linear Equation Solver</a>
+        <a href="Newton Forward Interpolation.html" class="link">• Newton Forward Interpolation</a>
+        <a href="Newton Dividend Difference.html" class="link">• Newton Dividend Difference</a>
+        <div id="accent-options">
+            <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+            <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+            <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+            <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+            <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+            <button class="accent-option" data-color="#ffffff" style="background-color: #ffffff; border: 1px solid #ccc;"></button>
+            <button class="accent-option" data-color="#000000" style="background-color: #000000;"></button>
+      
+        </div>
+      </div>
+
+       <script src='Scripts/themeAccent.js'> </script>
+        <script>
+        const heading = document.getElementById('math-heading');
+        const toast = document.getElementById('toast');
+        let clickCount = 0;
+
+        const funnyToasts = [
+            "Go Outside",
+            "You can't handle maths bro",
+            "This is not your project leave it and never touch it",
+            "n00b Alert!",
+            "Go and play Free fire",
+            "Perhaps you should leave coding immediately",
+            "Pro tip: Stop Doing This",
+            "what are you doing",
+            "enhale some CO2",
+            "step away from this Machine",
+            "Hahaha N00b!",
+            "Earth is not your place",
+            "error Code : 1D10T",
+            "This won't make you cool",
+            "This is why nobody likes you",
+        ];
+        
+        heading.addEventListener('click', () => {
+            clickCount++;
+            if (clickCount > 4) {
+                showToast();
+                clickCount = 0; // Reset click count after showing toast
+            }
+        });
+
+        function showToast() {
+            const randomIndex = Math.floor(Math.random() * funnyToasts.length);
+            toast.textContent = funnyToasts[randomIndex];
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000); // Toast will be visible for 3 seconds
+        }
+    </script>
+</body>
+</html>

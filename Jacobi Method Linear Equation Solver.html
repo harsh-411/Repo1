@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jacobi Method Linear Equation Solver</title>
+  <style>
+    @font-face {
+    font-family: 'Rosemary';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Rosemary'), url('Fonts/Rosemary.woff') format('woff');
+    }
+    
+    html {
+        font-family:'Rosemary'; font-weight:normal;
+    } 
+    /* CSS Variables for Theming */
+    :root {
+      --body-bg: #000;
+      --body-text: #fff;
+      --container-bg: #000;
+      --accent-color: #ff6600;
+      --input-bg: #222;
+    }
+    .light-mode {
+      --body-bg: #fff;
+      --body-text: #000;
+      --container-bg: #fff;
+      --input-bg: #f5f5f5;
+    }
+    /* Base Reset */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* Robust System Font & Layout */
+    body {
+      background-color: var(--body-bg);
+      color: var(--body-text);
+      //font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .container {
+      background: var(--container-bg);
+      border: 2px solid var(--accent-color);
+      border-radius: 10px;
+      padding: 30px;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 0 20px var(--accent-color);
+      animation: fadeIn 1s ease-out;
+      margin-bottom: 30px;
+      position: relative;
+      transition: background 0.3s;
+    }
+    /* Minimalistic Back Button */
+    .back-button {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 50px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+    }
+    .back-button:hover { transform: scale(1.1); }
+    /* Accent & Theme Toggle Buttons */
+    .accent-toggle {
+      position: absolute;
+      top: 0;
+      right: 50px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .accent-toggle:hover { transform: scale(1.1); }
+    .theme-toggle {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      cursor: pointer;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .theme-toggle:hover { transform: scale(1.1); }
+    /* Accent Options Panel (Closed by Default) */
+    #accent-options {
+      position: absolute;
+      top: 45px;
+      right: 50px;
+      display: none;
+      background: var(--container-bg);
+      border: 1px solid var(--accent-color);
+      border-radius: 5px;
+      padding: 5px;
+      box-shadow: 0 0 10px var(--accent-color);
+      gap: 5px;
+      z-index: 10;
+      flex-direction: row;
+    }
+    #accent-options button {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+    #accent-options button:hover { transform: scale(1.1); }
+    /* Headings and Text */
+    h1, h2 {
+      color: var(--accent-color);
+      text-shadow: 0 0 10px var(--accent-color);
+      animation: neon 1.5s infinite alternate;
+      margin-top: 40px;
+    }
+    h1 { font-size: 2rem; margin-bottom: 10px; }
+    h2 { font-size: 1.5rem; margin-top: 20px; margin-bottom: 10px; }
+    p { margin-bottom: 20px; line-height: 1.5; text-align: left; }
+    .input-group { margin: 15px 0; text-align: left; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--body-text); }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid var(--accent-color);
+      border-radius: 5px;
+      background: var(--input-bg);
+      color: var(--body-text);
+      font-size: 1rem;
+    }
+    button.calc-btn {
+      font-family:'Rosemary'; font-weight:normal;
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 1rem;
+      color: var(--body-text);
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--accent-color);
+      transition: transform 0.2s;
+    }
+    button.calc-btn:hover { transform: scale(1.05); }
+    .result { margin-top: 25px; font-size: 1.2rem; color: var(--body-text); }
+    /* Iteration Details Table */
+    #iterationDetails {
+      margin-top: 20px;
+      overflow-x: auto;
+      display: none;
+    }
+    #iterationDetails table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    #iterationDetails th, #iterationDetails td {
+      border: 1px solid var(--accent-color);
+      padding: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    #iterationDetails th {
+      background-color: var(--accent-color);
+      color: var(--body-text);
+    }
+    @keyframes neon {
+      from { text-shadow: 0 0 5px var(--accent-color), 0 0 10px var(--accent-color); }
+      to { text-shadow: 0 0 20px var(--accent-color), 0 0 30px var(--accent-color); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      h2 { font-size: 1.3rem; }
+      button.calc-btn { font-size: 0.9rem; padding: 10px 15px; }
+      #iterationDetails th, #iterationDetails td { font-size: 0.8rem; padding: 6px; }
+      #accent-options button { width: 25px; height: 25px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Project 12: Jacobi Method Linear Equation Solver -->
+  <div id="calculator-container" class="container">
+    <!-- Minimalistic Back Button -->
+    <button id="main-back-button" class="back-button">←</button>
+    <!-- Accent Color Selector Toggle (Closed by Default) -->
+    <button id="accent-toggle" class="accent-toggle">🎨</button>
+    <!-- Theme Toggle Button -->
+    <button class="theme-toggle"></button>
+    <!-- Accent Options Panel (Closed by Default) -->
+    <div id="accent-options">
+      <button class="accent-option" data-color="#ff6600" style="background-color: #ff6600;"></button>
+      <button class="accent-option" data-color="#007BFF" style="background-color: #007BFF;"></button>
+      <button class="accent-option" data-color="#FF0000" style="background-color: #FF0000;"></button>
+      <button class="accent-option" data-color="#28a745" style="background-color: #28a745;"></button>
+      <button class="accent-option" data-color="#6f42c1" style="background-color: #6f42c1;"></button>
+      
+    </div>
+    <h1>Jacobi Method Linear Equation Solver</h1>
+    <p>
+      Solve a 3×3 system of linear equations using the Jacobi iteration method.<br>
+      Enter the coefficients of the 3×3 matrix (a<sub>ij</sub>) and the right‑hand‑side values (b₁, b₂, b₃).<br>
+      Also provide an initial guess for x, y, and z, a tolerance, and a maximum number of iterations.
+    </p>
+    <!-- Coefficient Inputs -->
+    <div class="input-group">
+      <label for="a11">a₁₁:</label>
+      <input type="number" id="a11" step="any" value="2">
+    </div>
+    <div class="input-group">
+      <label for="a12">a₁₂:</label>
+      <input type="number" id="a12" step="any" value="-1">
+    </div>
+    <div class="input-group">
+      <label for="a13">a₁₃:</label>
+      <input type="number" id="a13" step="any" value="0">
+    </div>
+    <div class="input-group">
+      <label for="a21">a₂₁:</label>
+      <input type="number" id="a21" step="any" value="-1">
+    </div>
+    <div class="input-group">
+      <label for="a22">a₂₂:</label>
+      <input type="number" id="a22" step="any" value="2">
+    </div>
+    <div class="input-group">
+      <label for="a23">a₂₃:</label>
+      <input type="number" id="a23" step="any" value="-1">
+    </div>
+    <div class="input-group">
+      <label for="a31">a₃₁:</label>
+      <input type="number" id="a31" step="any" value="0">
+    </div>
+    <div class="input-group">
+      <label for="a32">a₃₂:</label>
+      <input type="number" id="a32" step="any" value="-1">
+    </div>
+    <div class="input-group">
+      <label for="a33">a₃₃:</label>
+      <input type="number" id="a33" step="any" value="2">
+    </div>
+    <!-- Right-hand side vector -->
+    <div class="input-group">
+      <label for="b1">b₁:</label>
+      <input type="number" id="b1" step="any" value="7">
+    </div>
+    <div class="input-group">
+      <label for="b2">b₂:</label>
+      <input type="number" id="b2" step="any" value="4">
+    </div>
+    <div class="input-group">
+      <label for="b3">b₃:</label>
+      <input type="number" id="b3" step="any" value="5">
+    </div>
+    <!-- Initial Guess -->
+    <div class="input-group">
+      <label for="initX">Initial x:</label>
+      <input type="number" id="initX" step="any" value="0">
+    </div>
+    <div class="input-group">
+      <label for="initY">Initial y:</label>
+      <input type="number" id="initY" step="any" value="0">
+    </div>
+    <div class="input-group">
+      <label for="initZ">Initial z:</label>
+      <input type="number" id="initZ" step="any" value="0">
+    </div>
+    <!-- Tolerance and Iterations -->
+    <div class="input-group">
+      <label for="tol">Tolerance:</label>
+      <input type="number" id="tol" step="any" value="0.0001">
+    </div>
+    <div class="input-group">
+      <label for="maxIter">Max Iterations:</label>
+      <input type="number" id="maxIter" value="25">
+    </div>
+    <button id="calculate" class="calc-btn">Solve System</button>
+    <div class="result" id="result"></div>
+    <button id="toggle-iterations" class="calc-btn">Show Iteration Details</button>
+    <div id="iterationDetails"></div>
+    <button id="show-description" class="calc-btn">Show Description</button>
+  </div>
+  
+  <!-- Description Section (Hidden by Default) -->
+  <div id="description-container" class="container" style="display: none;">
+    <!-- Minimalistic Back Button -->
+    <button id="back-button" class="back-button">←</button>
+    <!-- Accent Toggle Button for Description -->
+    <!-- <button id="accent-toggle-desc" class="accent-toggle">🎨</button> -->
+    <!-- Theme Toggle Button -->
+    <!-- <button class="theme-toggle"></button> -->
+    <h2>Project Description & Formula</h2>
+    <p>
+      <strong>Jacobi Method:</strong><br>
+      To solve the linear system A·x = b, the Jacobi iteration updates each variable using:
+      <br><br>
+      x<sub>i</sub>^(new) = (b<sub>i</sub> − Σ (a<sub>ij</sub> · x<sub>j</sub>^(old)) for j ≠ i) / a<sub>ii</sub>
+    </p>
+    <p>
+      <strong>How It Works:</strong><br>
+      1. Enter the coefficients for the 3×3 matrix and the right‑hand‑side values.<br>
+      2. Provide an initial guess for the solution vector (x, y, z), a tolerance, and a maximum iteration count.<br>
+      3. The method iteratively computes new approximations for x, y, and z until the solution converges within the tolerance.<br>
+      4. Detailed iteration information is available by toggling the iteration details table.
+    </p>
+    <p>
+      This project demonstrates solving a system of linear equations using the Jacobi method with dynamic theming, customizable accent colors, detailed iteration tracking, and a robust system font.
+    </p>
+  </div>
+  <script src='Scripts/themeAccent.js'></script>
+  <script>
+    // --- Theme Toggle Handling ---
+    /*function updateToggleIcon() {
+      const toggles = document.querySelectorAll('.theme-toggle');
+      toggles.forEach(toggle => {
+        toggle.textContent = document.body.classList.contains('light-mode') ? "🌙" : "☀";
+      });
+    }
+    document.querySelectorAll('.theme-toggle').forEach(toggle => {
+      toggle.addEventListener('click', function() {
+        document.body.classList.toggle('light-mode');
+        updateToggleIcon();
+      });
+    });*/
+    /*const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    darkModeMediaQuery.addEventListener('change', function(e) {
+      if (e.matches) { document.body.classList.remove('light-mode'); }
+      else { document.body.classList.add('light-mode'); }
+      updateToggleIcon();
+    });
+    if (!darkModeMediaQuery.matches) { document.body.classList.add('light-mode'); }
+    updateToggleIcon();*/
+    
+    // --- Accent Color Selector Handling ---
+    /*const accentToggle = document.getElementById('accent-toggle');
+    const accentOptions = document.getElementById('accent-options');
+    accentToggle.addEventListener('click', function() {
+      accentOptions.style.display = (accentOptions.style.display === "flex") ? "none" : "flex";
+    });
+    document.querySelectorAll('#accent-options button.accent-option').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const color = this.getAttribute('data-color');
+        document.documentElement.style.setProperty("--accent-color", color);
+        accentOptions.style.display = "none";
+        updateToggleIcon();
+      });
+    });*/
+    
+    // --- Jacobi Method Implementation ---
+    function jacobiSolver(A, b, x0, tol, maxIter) {
+      let n = A.length;
+      let x_old = x0.slice();
+      let x_new = new Array(n).fill(0);
+      let iterations = [];
+      for (let iter = 0; iter < maxIter; iter++) {
+        for (let i = 0; i < n; i++) {
+          let sum = 0;
+          for (let j = 0; j < n; j++) {
+            if (j !== i) {
+              sum += A[i][j] * x_old[j];
+            }
+          }
+          x_new[i] = (b[i] - sum) / A[i][i];
+        }
+        iterations.push({ iteration: iter + 1, x: x_old.slice(), newX: x_new.slice() });
+        // Check convergence
+        let error = 0;
+        for (let i = 0; i < n; i++) {
+          error = Math.max(error, Math.abs(x_new[i] - x_old[i]));
+        }
+        if (error < tol) {
+          return { solution: x_new, iterations: iterations };
+        }
+        x_old = x_new.slice();
+      }
+      return { solution: x_new, iterations: iterations };
+    }
+    
+    document.getElementById('calculate').addEventListener('click', function() {
+      // Get matrix A coefficients
+      const A = [
+        [parseFloat(document.getElementById('a11').value),
+         parseFloat(document.getElementById('a12').value),
+         parseFloat(document.getElementById('a13').value)],
+        [parseFloat(document.getElementById('a21').value),
+         parseFloat(document.getElementById('a22').value),
+         parseFloat(document.getElementById('a23').value)],
+        [parseFloat(document.getElementById('a31').value),
+         parseFloat(document.getElementById('a32').value),
+         parseFloat(document.getElementById('a33').value)]
+      ];
+      // Get vector b
+      const b = [
+        parseFloat(document.getElementById('b1').value),
+        parseFloat(document.getElementById('b2').value),
+        parseFloat(document.getElementById('b3').value)
+      ];
+      // Get initial guess
+      const initX = parseFloat(document.getElementById('initX').value);
+      const initY = parseFloat(document.getElementById('initY').value);
+      const initZ = parseFloat(document.getElementById('initZ').value);
+      const x0 = [initX, initY, initZ];
+      // Get tolerance and max iterations
+      const tol = parseFloat(document.getElementById('tol').value);
+      const maxIter = parseInt(document.getElementById('maxIter').value);
+      
+      // Validate inputs
+      if (A.flat().some(isNaN) || b.some(isNaN) || x0.some(isNaN) || isNaN(tol) || isNaN(maxIter) || tol <= 0 || maxIter <= 0) {
+        document.getElementById('result').textContent = 'Please enter valid numbers for all inputs.';
+        return;
+      }
+      
+      const output = jacobiSolver(A, b, x0, tol, maxIter);
+      const sol = output.solution;
+      document.getElementById('result').textContent =
+        `Approximate solution: x = ${sol[0].toFixed(6)}, y = ${sol[1].toFixed(6)}, z = ${sol[2].toFixed(6)}`;
+      
+      // Build iteration details table
+      let tableHTML = `<table>
+                        <tr>
+                          <th>Iteration</th>
+                          <th>Old x, y, z</th>
+                          <th>New x, y, z</th>
+                        </tr>`;
+      output.iterations.forEach(item => {
+        tableHTML += `<tr>
+                        <td>${item.iteration}</td>
+                        <td>${item.x.map(v => v.toFixed(6)).join(", ")}</td>
+                        <td>${item.newX.map(v => v.toFixed(6)).join(", ")}</td>
+                      </tr>`;
+      });
+      tableHTML += `</table>`;
+      document.getElementById('iterationDetails').innerHTML = tableHTML;
+    });
+    
+    // Toggle Iteration Details Display
+    document.getElementById('toggle-iterations').addEventListener('click', function() {
+      const iterDiv = document.getElementById('iterationDetails');
+      if (iterDiv.style.display === "none" || iterDiv.style.display === "") {
+        iterDiv.style.display = "block";
+        this.textContent = "Hide Iteration Details";
+      } else {
+        iterDiv.style.display = "none";
+        this.textContent = "Show Iteration Details";
+      }
+    });
+    
+    // --- Navigation ---
+    document.getElementById('show-description').addEventListener('click', function() {
+      document.getElementById('calculator-container').style.display = 'none';
+      document.getElementById('description-container').style.display = 'block';
+    });
+    document.getElementById('back-button').addEventListener('click', function() {
+      document.getElementById('description-container').style.display = 'none';
+      document.getElementById('calculator-container').style.display = 'block';
+    });
+    document.getElementById('main-back-button').addEventListener('click', function() {
+      window.history.back();
+    });
+  </script>
+</body>
+</html>
